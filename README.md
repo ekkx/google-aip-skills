@@ -1,9 +1,12 @@
 # google-aip
 
-A Claude Code plugin that bundles the full text of every approved
-[Google AIP](https://google.aip.dev) (API Improvement Proposal). Claude can
-reference them while designing or reviewing APIs — completely offline, no
-network calls at skill-use time.
+An offline, multi-agent reference bundle of every approved
+[Google AIP](https://google.aip.dev) (API Improvement Proposal). The same
+markdown tree is exposed as a **Claude Code plugin**, a **Codex `AGENTS.md`**,
+and a **Cursor rule** — so any of those agents can consult the actual upstream
+spec while designing or reviewing APIs, with no network calls at use time.
+Other agents (Cline, Continue, plain `@file` mentions, etc.) can read the same
+markdown directly.
 
 ## Install
 
