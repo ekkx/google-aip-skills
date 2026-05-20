@@ -1,12 +1,27 @@
 # google-aip
 
-An offline, multi-agent reference bundle of every approved
-[Google AIP](https://google.aip.dev) (API Improvement Proposal). The same
-markdown tree is exposed as a **Claude Code plugin**, a **Codex `AGENTS.md`**,
-and a **Cursor rule** — so any of those agents can consult the actual upstream
-spec while designing or reviewing APIs, with no network calls at use time.
+> **The problem.** Ask an LLM to design a REST or gRPC API and it'll happily
+> invent its own conventions — ignoring AIP-121's resource-oriented patterns,
+> making up error shapes, skipping pagination tokens. The
+> [Google AIP spec](https://google.aip.dev) is public, but it lives on an HTML
+> site that agents can't reliably cite from, and the training cutoff already
+> missed the latest revisions.
+>
+> **The fix.** Ship the full, current AIP text *into the agent's context* —
+> offline, structured, always current.
+
+The same markdown tree is exposed as three entry points so whichever agent
+you happen to use can consult the actual upstream spec without a network
+call:
+
+- **Claude Code plugin**
+- **Codex `AGENTS.md`**
+- **Cursor rule**
+
 Other agents (Cline, Continue, plain `@file` mentions, etc.) can read the same
-markdown directly.
+markdown directly. CI re-syncs daily from
+[`aip-dev/google.aip.dev`](https://github.com/aip-dev/google.aip.dev) so the
+bundle never lags the upstream spec.
 
 ## Install
 
