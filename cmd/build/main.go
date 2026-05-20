@@ -19,8 +19,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
-
 	"gopkg.in/yaml.v3"
 )
 
@@ -618,11 +616,13 @@ func writeCursorRule(scopes map[string]*scope, byScope map[string][]aip, repoRoo
 }
 
 func writeSourceMD(skillRoot, sha string, total int) error {
-	now := time.Now().UTC().Format(time.RFC3339)
+	// Intentionally omit a generated-at timestamp: the build must be idempotent
+	// for a given upstream commit so daily CI doesn't churn commits when nothing
+	// has actually changed. The git commit timestamp on this file is the source
+	// of truth for when it was last refreshed.
 	content := "# Source\n\n" +
 		"- Upstream repository: <https://github.com/aip-dev/google.aip.dev>\n" +
 		fmt.Sprintf("- Commit SHA: `%s`\n", sha) +
-		fmt.Sprintf("- Generated at: %s\n", now) +
 		fmt.Sprintf("- Approved AIPs imported: %d\n", total)
 	return os.WriteFile(filepath.Join(skillRoot, "SOURCE.md"), []byte(content), 0o644)
 }
