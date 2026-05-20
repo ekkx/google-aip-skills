@@ -1,5 +1,5 @@
 ---
-description: Authoritative reference for Google AIP (API Improvement Proposals). Apply when the user is designing or reviewing an API and mentions AIPs, resource-oriented design, standard methods, pagination, errors, long-running operations, API versioning, or a specific AIP-NNN number.
+description: 'Authoritative reference for Google AIP (API Improvement Proposals). Apply when the user is designing or reviewing an API and mentions AIPs, resource-oriented design, standard methods, pagination, errors, long-running operations, API versioning, or a specific AIP-NNN number.'
 alwaysApply: false
 ---
 

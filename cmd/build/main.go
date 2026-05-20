@@ -439,7 +439,7 @@ func writeSkillMD(scopes map[string]*scope, byScope map[string][]aip, skillRoot 
 	var b strings.Builder
 	b.WriteString("---\n")
 	b.WriteString("name: google-aip\n")
-	fmt.Fprintf(&b, "description: %s\n", desc)
+	fmt.Fprintf(&b, "description: %s\n", yamlSingleQuoted(desc))
 	b.WriteString("---\n\n")
 	b.WriteString("# Google AIP (API Improvement Proposals)\n\n")
 	b.WriteString("This skill bundles the full, current text of every approved Google AIP, " +
@@ -591,7 +591,7 @@ func writeCursorRule(scopes map[string]*scope, byScope map[string][]aip, repoRoo
 
 	var b strings.Builder
 	b.WriteString("---\n")
-	fmt.Fprintf(&b, "description: %s\n", desc)
+	fmt.Fprintf(&b, "description: %s\n", yamlSingleQuoted(desc))
 	b.WriteString("alwaysApply: false\n")
 	b.WriteString("---\n\n")
 	b.WriteString("# Google AIP (API Improvement Proposals)\n\n")
@@ -632,6 +632,14 @@ func orDefault(s, fallback string) string {
 		return fallback
 	}
 	return s
+}
+
+// yamlSingleQuoted wraps s as a YAML single-quoted scalar. This is the safest
+// way to embed an arbitrary one-line string in frontmatter: single-quoted
+// scalars allow any character (including ": ", "#", etc.) except a literal
+// single quote, which YAML escapes by doubling.
+func yamlSingleQuoted(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "''") + "'"
 }
 
 func humanize(code string) string {
