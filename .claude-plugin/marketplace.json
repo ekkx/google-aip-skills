@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "google-aip-skills",
+  "description": "Marketplace hosting the google-aip plugin: an always-up-to-date, offline-readable bundle of every approved Google AIP (API Improvement Proposal).",
+  "owner": {
+    "name": "ekkx",
+    "url": "https://github.com/ekkx"
+  },
+  "plugins": [
+    {
+      "name": "google-aip",
+      "source": "./",
+      "description": "Offline reference for every approved Google AIP, refreshed daily from aip-dev/google.aip.dev.",
+      "category": "documentation"
+    }
+  ]
+}

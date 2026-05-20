@@ -1,0 +1,11 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "google-aip",
+  "description": "Offline Claude Code skill bundling every approved Google AIP (API Improvement Proposal) from aip.dev. Synced daily from the upstream spec so guidance is always current. Triggers whenever the user designs or reviews an API and mentions AIPs, resource-oriented design, standard methods, pagination, errors, long-running operations, or API versioning.",
+  "author": {
+    "name": "ekkx",
+    "url": "https://github.com/ekkx"
+  },
+  "homepage": "https://github.com/ekkx/google-aip-skills",
+  "repository": "https://github.com/ekkx/google-aip-skills"
+}

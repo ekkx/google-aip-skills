@@ -1,0 +1,58 @@
+name: sync
+
+on:
+  schedule:
+    # Daily at 03:00 UTC. AIPs change infrequently, so daily is plenty.
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - "cmd/build/**"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/sync.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build skill from upstream
+        run: go run ./cmd/build
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- skills/google-aip; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes since last sync."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Changes detected:"
+            git diff --stat -- skills/google-aip
+          fi
+
+      - name: Commit and push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # SOURCE.md records the upstream commit SHA — surface it in the commit message.
+          upstream_sha=$(grep -oE '`[0-9a-f]{40}`' skills/google-aip/SOURCE.md | tr -d '`' | head -1)
+          git add skills/google-aip
+          git commit -m "chore(sync): refresh AIPs from upstream ${upstream_sha:0:7}"
+          git push
