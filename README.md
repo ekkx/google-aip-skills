@@ -67,6 +67,22 @@ ln -s ../../vendor/google-aip-skills/.cursor/rules/google-aip.mdc .cursor/rules/
 The rule uses `alwaysApply: false` and a description, so Cursor only attaches
 it when the conversation actually involves API design.
 
+### Keeping the submodule up to date
+
+Git submodules are pinned to a specific commit, so the Codex / Cursor copies
+do **not** follow upstream automatically. When you want the latest AIPs:
+
+```sh
+# Update only this submodule (don't touch your other submodules).
+git submodule update --remote vendor/google-aip-skills
+git add vendor/google-aip-skills
+git commit -m "chore: bump google-aip-skills"
+```
+
+The path argument is important — running `git submodule update --remote`
+without it would update every submodule in your repo. If you'd like this
+fully automated, point Renovate or Dependabot at the submodule.
+
 ### Other agents (Cline, Continue, etc.)
 
 Anything that can read Markdown from your repository works. Point the agent at
