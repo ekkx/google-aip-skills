@@ -141,10 +141,6 @@ google-aip-skills/
 └── README.md
 ```
 
-The `.claude/settings.json` checked into this repo only enables the
-`skill-creator` plugin for *contributors* working in this checkout — it has
-no effect on plugin consumers.
-
 ## Licensing
 
 The build tooling in this repository is MIT-licensed (see `LICENSE`). The AIP

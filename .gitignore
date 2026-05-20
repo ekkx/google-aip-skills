@@ -1,6 +1,10 @@
 # Local build artifact (we use `go run`, not a checked-in binary)
 /build
 
+# Per-contributor Claude Code settings (skill-creator etc.) — opt in per machine,
+# do not ship as part of the distribution.
+/.claude/
+
 # Editor / OS junk
 .DS_Store
 *.swp
