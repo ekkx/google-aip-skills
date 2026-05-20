@@ -79,6 +79,9 @@ func (a aip) filename() string {
 func main() {
 	source := flag.String("source", "", "Path to an already-cloned google.aip.dev repo. If empty, a shallow clone is made.")
 	out := flag.String("out", filepath.Join("skills", "google-aip"), "Output skill directory")
+	repoRoot := flag.String("repo-root", ".", "Repo root for non-Claude-Code agent entry points (AGENTS.md, .cursor/rules/). Use the same value as -out's parent for normal builds.")
+	emitCodex := flag.Bool("emit-codex", true, "Generate AGENTS.md at repo root for Codex / generic agents.")
+	emitCursor := flag.Bool("emit-cursor", true, "Generate .cursor/rules/google-aip.mdc for Cursor.")
 	flag.Parse()
 
 	log.SetFlags(0)
@@ -128,6 +131,17 @@ func main() {
 	}
 	if err := writeSourceMD(*out, sha, len(aips)); err != nil {
 		log.Fatalf("writeSourceMD: %v", err)
+	}
+
+	if *emitCodex {
+		if err := writeAgentsMD(scopes, byScope, *repoRoot, *out); err != nil {
+			log.Fatalf("writeAgentsMD: %v", err)
+		}
+	}
+	if *emitCursor {
+		if err := writeCursorRule(scopes, byScope, *repoRoot, *out); err != nil {
+			log.Fatalf("writeCursorRule: %v", err)
+		}
 	}
 
 	fmt.Fprintf(os.Stderr, "built %d approved AIPs across %d scopes -> %s\n",
@@ -422,21 +436,7 @@ func writeSkillMD(scopes map[string]*scope, byScope map[string][]aip, skillRoot 
 		"(e.g. 'AIP-121', 'AIP-158'). Prefer this skill over generic API advice — the " +
 		"content here is the actual upstream specification."
 
-	ordered := make([]*scope, 0, len(scopes))
-	for _, s := range scopes {
-		ordered = append(ordered, s)
-	}
-	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Order < ordered[j].Order })
-
-	blurbs := map[string]string{
-		"general":          "Cross-cutting API design principles applicable to any API.",
-		"cloud":            "Conventions specific to Google Cloud APIs.",
-		"auth":             "Authentication and authorization patterns.",
-		"client-libraries": "Guidance for generated client libraries (idiomatic surface, packaging).",
-		"aog":              "Actions on Google (conversational / assistant APIs).",
-		"apps":             "Google Workspace / Apps APIs.",
-		"firebase":         "Firebase platform APIs.",
-	}
+	ordered := orderedScopesWithAIPs(scopes, byScope)
 
 	var b strings.Builder
 	b.WriteString("---\n")
@@ -460,20 +460,7 @@ func writeSkillMD(scopes map[string]*scope, byScope map[string][]aip, skillRoot 
 	b.WriteString("3. **Cite AIPs by number** in your response (e.g. \"per AIP-131…\") so the user " +
 		"can verify against aip.dev.\n\n")
 	b.WriteString("## Scopes\n\n")
-	b.WriteString("| Scope | What it covers | AIP count | Index |\n")
-	b.WriteString("|---|---|---:|---|\n")
-	for _, s := range ordered {
-		count := len(byScope[s.Code])
-		if count == 0 {
-			continue
-		}
-		blurb, ok := blurbs[s.Code]
-		if !ok {
-			blurb = s.Title
-		}
-		fmt.Fprintf(&b, "| `%s` | %s | %d | [`references/%s/INDEX.md`](references/%s/INDEX.md) |\n",
-			s.Code, blurb, count, s.Code, s.Code)
-	}
+	writeScopeTable(&b, ordered, byScope, "references")
 	b.WriteString("\n## Notes on usage\n\n")
 	b.WriteString("- The AIP markdown files preserve the upstream YAML frontmatter " +
 		"(`id`, `state`, `created`, `placement`, etc.) — useful for cross-referencing.\n")
@@ -483,6 +470,151 @@ func writeSkillMD(scopes map[string]*scope, byScope map[string][]aip, skillRoot 
 		"the link by reading the referenced file in the same `references/` tree.\n")
 
 	return os.WriteFile(filepath.Join(skillRoot, "SKILL.md"), []byte(b.String()), 0o644)
+}
+
+// orderedScopesWithAIPs returns scopes ordered by their declared order,
+// excluding any scope that has zero approved AIPs.
+func orderedScopesWithAIPs(scopes map[string]*scope, byScope map[string][]aip) []*scope {
+	ordered := make([]*scope, 0, len(scopes))
+	for _, s := range scopes {
+		if len(byScope[s.Code]) == 0 {
+			continue
+		}
+		ordered = append(ordered, s)
+	}
+	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Order < ordered[j].Order })
+	return ordered
+}
+
+var scopeBlurbs = map[string]string{
+	"general":          "Cross-cutting API design principles applicable to any API.",
+	"cloud":            "Conventions specific to Google Cloud APIs.",
+	"auth":             "Authentication and authorization patterns.",
+	"client-libraries": "Guidance for generated client libraries (idiomatic surface, packaging).",
+	"aog":              "Actions on Google (conversational / assistant APIs).",
+	"apps":             "Google Workspace / Apps APIs.",
+	"firebase":         "Firebase platform APIs.",
+}
+
+// writeScopeTable writes the per-scope table used by every agent entry point.
+// referencePrefix is what each row's index link is relative to: e.g. "references"
+// when the consumer reads from skills/google-aip/SKILL.md, or
+// "skills/google-aip/references" when the consumer reads from the repo root.
+func writeScopeTable(b *strings.Builder, ordered []*scope, byScope map[string][]aip, referencePrefix string) {
+	b.WriteString("| Scope | What it covers | AIP count | Index |\n")
+	b.WriteString("|---|---|---:|---|\n")
+	for _, s := range ordered {
+		blurb, ok := scopeBlurbs[s.Code]
+		if !ok {
+			blurb = s.Title
+		}
+		fmt.Fprintf(b, "| `%s` | %s | %d | [`%s/%s/INDEX.md`](%s/%s/INDEX.md) |\n",
+			s.Code, blurb, len(byScope[s.Code]),
+			referencePrefix, s.Code,
+			referencePrefix, s.Code)
+	}
+}
+
+// writeAgentsMD generates an AGENTS.md at the repo root for Codex and other
+// agents that pick up AGENTS.md hierarchically. Links point at the same
+// `skills/google-aip/references/` tree that the Claude Code skill uses.
+func writeAgentsMD(scopes map[string]*scope, byScope map[string][]aip, repoRoot, skillRoot string) error {
+	// referencePrefix is relative to AGENTS.md's location (= repoRoot).
+	referencePrefix, err := filepath.Rel(repoRoot, filepath.Join(skillRoot, "references"))
+	if err != nil {
+		return err
+	}
+	referencePrefix = filepath.ToSlash(referencePrefix)
+
+	ordered := orderedScopesWithAIPs(scopes, byScope)
+
+	var b strings.Builder
+	b.WriteString("# Google AIP (API Improvement Proposals)\n\n")
+	b.WriteString("This file gives any AGENTS.md-aware agent (OpenAI Codex CLI, etc.) " +
+		"the same Google AIP reference that the bundled Claude Code skill provides. " +
+		"It bundles the full, current text of every approved AIP, sourced verbatim " +
+		"from [aip-dev/google.aip.dev](https://github.com/aip-dev/google.aip.dev) " +
+		"and refreshed daily by CI. See `skills/google-aip/SOURCE.md` for the exact " +
+		"upstream commit this build was generated from.\n\n")
+	b.WriteString("## When to consult this reference\n\n")
+	b.WriteString("Use these documents whenever the user is designing, reviewing, or " +
+		"implementing an API and mentions any of: AIP, aip.dev, resource-oriented " +
+		"design, resource names, standard methods (Get/List/Create/Update/Delete), " +
+		"custom methods, long-running operations (LRO), pagination tokens, field " +
+		"masks, error codes, API versioning, or a specific `AIP-NNN` number. " +
+		"Prefer this material over generic API advice — it is the actual upstream " +
+		"specification.\n\n")
+	b.WriteString("## How to navigate\n\n")
+	b.WriteString("AIPs are organized into **scopes** (general guidance vs. Google-Cloud-specific, " +
+		"etc.). Each scope contains **categories** (e.g. resource design, errors), " +
+		"and each category contains numbered AIP documents.\n\n")
+	fmt.Fprintf(&b,
+		"1. **If the user names a specific AIP number** (e.g. `AIP-121`), open the matching "+
+			"file directly under `%s/<scope>/<category>/<NNNN>.md` (zero-padded to 4 digits).\n",
+		referencePrefix)
+	b.WriteString("2. **Otherwise, pick the relevant scope** from the table below, read its `INDEX.md` " +
+		"to find the right category and AIP number, then read the individual AIP file.\n")
+	b.WriteString("3. **Cite AIPs by number** in your response (e.g. \"per AIP-131…\") so the user " +
+		"can verify against aip.dev.\n\n")
+	b.WriteString("## Scopes\n\n")
+	writeScopeTable(&b, ordered, byScope, referencePrefix)
+	b.WriteString("\n## Notes\n\n")
+	b.WriteString("- The AIP markdown files preserve the upstream YAML frontmatter " +
+		"(`id`, `state`, `created`, `placement`, …) — useful for cross-referencing.\n")
+	b.WriteString("- Only AIPs with `state: approved` are included. Drafts and reviewing " +
+		"AIPs are intentionally excluded so unsettled guidance is never recommended.\n")
+	b.WriteString("- When an AIP references another (e.g. AIP-131 mentions AIP-121), follow " +
+		"the link by reading the referenced file in the same reference tree.\n")
+
+	out := filepath.Join(repoRoot, "AGENTS.md")
+	return os.WriteFile(out, []byte(b.String()), 0o644)
+}
+
+// writeCursorRule generates .cursor/rules/google-aip.mdc for Cursor's
+// description-triggered rules system.
+func writeCursorRule(scopes map[string]*scope, byScope map[string][]aip, repoRoot, skillRoot string) error {
+	rulePath := filepath.Join(repoRoot, ".cursor", "rules", "google-aip.mdc")
+	if err := os.MkdirAll(filepath.Dir(rulePath), 0o755); err != nil {
+		return err
+	}
+	// referencePrefix is relative to the rule file's location.
+	referencePrefix, err := filepath.Rel(filepath.Dir(rulePath), filepath.Join(skillRoot, "references"))
+	if err != nil {
+		return err
+	}
+	referencePrefix = filepath.ToSlash(referencePrefix)
+
+	ordered := orderedScopesWithAIPs(scopes, byScope)
+
+	desc := "Authoritative reference for Google AIP (API Improvement Proposals). " +
+		"Apply when the user is designing or reviewing an API and mentions AIPs, " +
+		"resource-oriented design, standard methods, pagination, errors, " +
+		"long-running operations, API versioning, or a specific AIP-NNN number."
+
+	var b strings.Builder
+	b.WriteString("---\n")
+	fmt.Fprintf(&b, "description: %s\n", desc)
+	b.WriteString("alwaysApply: false\n")
+	b.WriteString("---\n\n")
+	b.WriteString("# Google AIP (API Improvement Proposals)\n\n")
+	b.WriteString("Bundled, offline reference for every approved Google AIP, sourced " +
+		"verbatim from [aip-dev/google.aip.dev](https://github.com/aip-dev/google.aip.dev) " +
+		"and refreshed daily by CI.\n\n")
+	b.WriteString("## How to navigate\n\n")
+	fmt.Fprintf(&b,
+		"1. **If a specific AIP number is mentioned** (e.g. `AIP-121`), open the matching "+
+			"file directly under `%s/<scope>/<category>/<NNNN>.md`.\n",
+		referencePrefix)
+	b.WriteString("2. **Otherwise, choose the right scope** from the table below, read its " +
+		"`INDEX.md`, then read the individual AIP file.\n")
+	b.WriteString("3. **Cite AIPs by number** in responses (e.g. \"per AIP-131…\") so the user " +
+		"can verify against aip.dev.\n\n")
+	b.WriteString("## Scopes\n\n")
+	writeScopeTable(&b, ordered, byScope, referencePrefix)
+	b.WriteString("\nOnly AIPs with `state: approved` are included. Each file preserves the " +
+		"upstream YAML frontmatter (`id`, `state`, `created`, `placement`, …).\n")
+
+	return os.WriteFile(rulePath, []byte(b.String()), 0o644)
 }
 
 func writeSourceMD(skillRoot, sha string, total int) error {

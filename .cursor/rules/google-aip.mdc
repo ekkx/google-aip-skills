@@ -1,0 +1,27 @@
+---
+description: Authoritative reference for Google AIP (API Improvement Proposals). Apply when the user is designing or reviewing an API and mentions AIPs, resource-oriented design, standard methods, pagination, errors, long-running operations, API versioning, or a specific AIP-NNN number.
+alwaysApply: false
+---
+
+# Google AIP (API Improvement Proposals)
+
+Bundled, offline reference for every approved Google AIP, sourced verbatim from [aip-dev/google.aip.dev](https://github.com/aip-dev/google.aip.dev) and refreshed daily by CI.
+
+## How to navigate
+
+1. **If a specific AIP number is mentioned** (e.g. `AIP-121`), open the matching file directly under `../../skills/google-aip/references/<scope>/<category>/<NNNN>.md`.
+2. **Otherwise, choose the right scope** from the table below, read its `INDEX.md`, then read the individual AIP file.
+3. **Cite AIPs by number** in responses (e.g. "per AIP-131…") so the user can verify against aip.dev.
+
+## Scopes
+
+| Scope | What it covers | AIP count | Index |
+|---|---|---:|---|
+| `general` | Cross-cutting API design principles applicable to any API. | 70 | [`../../skills/google-aip/references/general/INDEX.md`](../../skills/google-aip/references/general/INDEX.md) |
+| `cloud` | Conventions specific to Google Cloud APIs. | 4 | [`../../skills/google-aip/references/cloud/INDEX.md`](../../skills/google-aip/references/cloud/INDEX.md) |
+| `auth` | Authentication and authorization patterns. | 7 | [`../../skills/google-aip/references/auth/INDEX.md`](../../skills/google-aip/references/auth/INDEX.md) |
+| `client-libraries` | Guidance for generated client libraries (idiomatic surface, packaging). | 11 | [`../../skills/google-aip/references/client-libraries/INDEX.md`](../../skills/google-aip/references/client-libraries/INDEX.md) |
+| `apps` | Google Workspace / Apps APIs. | 3 | [`../../skills/google-aip/references/apps/INDEX.md`](../../skills/google-aip/references/apps/INDEX.md) |
+| `aog` | Actions on Google (conversational / assistant APIs). | 5 | [`../../skills/google-aip/references/aog/INDEX.md`](../../skills/google-aip/references/aog/INDEX.md) |
+
+Only AIPs with `state: approved` are included. Each file preserves the upstream YAML frontmatter (`id`, `state`, `created`, `placement`, …).

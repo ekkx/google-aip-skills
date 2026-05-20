@@ -7,16 +7,53 @@ network calls at skill-use time.
 
 ## Install
 
+The same `references/` tree powers every agent. Each agent just gets its own
+entry point file.
+
+### Claude Code
+
 This repository is both a [Claude Code marketplace](https://docs.claude.com/en/docs/claude-code/plugins)
-and the plugin it serves. From inside Claude Code:
+and the plugin it serves:
 
 ```text
 /plugin marketplace add ekkx/google-aip-skills
 /plugin install google-aip@google-aip-skills
 ```
 
-Subsequent updates land automatically — the marketplace tracks this repository's
-default branch, which is refreshed daily by CI from the upstream AIP spec.
+Updates land automatically — the marketplace tracks this repository's default
+branch, which is refreshed daily by CI from the upstream AIP spec.
+
+### Codex CLI (and any AGENTS.md-aware agent)
+
+Add this repository to your project as a git submodule (or vendor it however
+you prefer), then point `AGENTS.md` at the bundled one:
+
+```sh
+git submodule add https://github.com/ekkx/google-aip-skills vendor/google-aip-skills
+ln -s vendor/google-aip-skills/AGENTS.md AGENTS.md      # or copy it
+```
+
+Codex picks up `AGENTS.md` hierarchically — if you'd rather scope it to a
+subdirectory, drop it there instead of the repo root.
+
+### Cursor
+
+Same submodule trick, symlinked into Cursor's rules directory:
+
+```sh
+git submodule add https://github.com/ekkx/google-aip-skills vendor/google-aip-skills
+mkdir -p .cursor/rules
+ln -s ../../vendor/google-aip-skills/.cursor/rules/google-aip.mdc .cursor/rules/google-aip.mdc
+```
+
+The rule uses `alwaysApply: false` and a description, so Cursor only attaches
+it when the conversation actually involves API design.
+
+### Other agents (Cline, Continue, etc.)
+
+Anything that can read Markdown from your repository works. Point the agent at
+`vendor/google-aip-skills/skills/google-aip/SKILL.md` (or `AGENTS.md`) and let
+it follow the links from there.
 
 ## What you get
 
@@ -92,10 +129,13 @@ without upstream changes produces an identical tree.
 ```
 google-aip-skills/
 ├── .claude-plugin/
-│   ├── marketplace.json   # this repo is a marketplace
-│   └── plugin.json        # ... and also the plugin it ships
-├── skills/google-aip/     # the skill payload (regenerated)
-├── cmd/build/main.go      # the importer
+│   ├── marketplace.json     # this repo is a marketplace
+│   └── plugin.json          # ... and also the plugin it ships
+├── skills/google-aip/       # the shared payload (SKILL.md + references/)
+├── AGENTS.md                # entry point for Codex / generic agents
+├── .cursor/rules/
+│   └── google-aip.mdc       # entry point for Cursor
+├── cmd/build/main.go        # the importer
 ├── .github/workflows/sync.yml
 ├── go.mod / go.sum
 └── README.md

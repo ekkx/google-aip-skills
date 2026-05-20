@@ -37,13 +37,14 @@ jobs:
       - name: Detect changes
         id: diff
         run: |
-          if git diff --quiet -- skills/google-aip; then
+          paths="skills/google-aip AGENTS.md .cursor/rules/google-aip.mdc"
+          if git diff --quiet -- $paths; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No changes since last sync."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Changes detected:"
-            git diff --stat -- skills/google-aip
+            git diff --stat -- $paths
           fi
 
       - name: Commit and push
@@ -53,6 +54,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # SOURCE.md records the upstream commit SHA — surface it in the commit message.
           upstream_sha=$(grep -oE '`[0-9a-f]{40}`' skills/google-aip/SOURCE.md | tr -d '`' | head -1)
-          git add skills/google-aip
+          git add skills/google-aip AGENTS.md .cursor/rules/google-aip.mdc
           git commit -m "chore(sync): refresh AIPs from upstream ${upstream_sha:0:7}"
           git push
