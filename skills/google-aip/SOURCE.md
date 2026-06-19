@@ -1,5 +1,5 @@
 # Source
 
 - Upstream repository: <https://github.com/aip-dev/google.aip.dev>
-- Commit SHA: `e8e66654caebcd74e490f98b56b9a463d342ced0`
+- Commit SHA: `64f4be363f2beb075a1fceb4b90611b4d0c5c309`
 - Approved AIPs imported: 100
