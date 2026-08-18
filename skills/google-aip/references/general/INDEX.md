@@ -86,6 +86,7 @@ AIPs in the `general` scope, grouped by category. Read the specific AIP file fro
 
 - **AIP-180** — Backwards compatibility (`references/general/compatibility/0180.md`)
 - **AIP-181** — Stability levels (`references/general/compatibility/0181.md`)
+- **AIP-184** — API version identifiers (`references/general/compatibility/0184.md`)
 - **AIP-185** — API Versioning (`references/general/compatibility/0185.md`)
 
 ## Polish (`polish`)

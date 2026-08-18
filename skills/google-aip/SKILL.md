@@ -19,7 +19,7 @@ AIPs are organized into **scopes** (general guidance vs. Google-Cloud-specific, 
 
 | Scope | What it covers | AIP count | Index |
 |---|---|---:|---|
-| `general` | Cross-cutting API design principles applicable to any API. | 70 | [`references/general/INDEX.md`](references/general/INDEX.md) |
+| `general` | Cross-cutting API design principles applicable to any API. | 71 | [`references/general/INDEX.md`](references/general/INDEX.md) |
 | `cloud` | Conventions specific to Google Cloud APIs. | 4 | [`references/cloud/INDEX.md`](references/cloud/INDEX.md) |
 | `auth` | Authentication and authorization patterns. | 7 | [`references/auth/INDEX.md`](references/auth/INDEX.md) |
 | `client-libraries` | Guidance for generated client libraries (idiomatic surface, packaging). | 11 | [`references/client-libraries/INDEX.md`](references/client-libraries/INDEX.md) |
